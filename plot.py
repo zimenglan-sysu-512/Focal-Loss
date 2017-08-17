@@ -32,3 +32,6 @@ if __name__ == '__main__':
 	'''Loss and Gradient'''
 	plot_Focal_Loss(gama=2)
 	plot_Gradient_of_Focal_Loss(gama=2)
+	
+	pi = 0.01; bias = -np.log((1 - pi) / pi)
+	print "pi:", pi, "bias:", bias
