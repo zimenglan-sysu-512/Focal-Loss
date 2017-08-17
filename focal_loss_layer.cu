@@ -18,9 +18,9 @@ void FocalLossLayer<Dtype>::compute_intermediate_values_of_gpu() {
 
   // log(p_t)
   caffe_gpu_log(count,  prob_data, log_prob_data);
-  // (1 - p_t) ^ gama
+  // (1 - p_t) ^ gamma
   caffe_gpu_sub(count,  ones_data, prob_data, power_prob_data);
-  caffe_gpu_powx(count, power_prob_.gpu_data(), gama_, power_prob_data);
+  caffe_gpu_powx(count, power_prob_.gpu_data(), gamma_, power_prob_data);
 }
 
 template <typename Dtype>
@@ -111,7 +111,7 @@ __global__ void FocalLossBackwardGPU(const int nthreads,
           const int num, 
           const int dim,
           const int spatial_dim, 
-          const Dtype gama,
+          const Dtype gamma,
           const bool has_ignore_label_,
           const int ignore_label_, 
           Dtype* counts) 
@@ -131,7 +131,7 @@ __global__ void FocalLossBackwardGPU(const int nthreads,
     } else {
       // the gradient from FL w.r.t p_t, here ignore the `sign`
       int ind_i  = n * dim + label_value * spatial_dim + s; // index of ground-truth label
-      Dtype grad = gama * (power_prob_data[ind_i] / (1 - prob_data[ind_i])) * log_prob_data[ind_i] 
+      Dtype grad = gamma * (power_prob_data[ind_i] / (1 - prob_data[ind_i])) * log_prob_data[ind_i] 
                  + power_prob_data[ind_i] / prob_data[ind_i];
       // the gradient w.r.t input data x
       for (int c = 0; c < channels; ++c) {
@@ -176,7 +176,7 @@ void FocalLossLayer<Dtype>::Backward_gpu(const vector<Blob<Dtype>*>& top,
     // NOLINT_NEXT_LINE(whitespace/operators)
     FocalLossBackwardGPU<Dtype><<<CAFFE_GET_BLOCKS(nthreads),
         CAFFE_CUDA_NUM_THREADS>>>(nthreads, top_data, label, prob_data, log_prob_data, power_prob_data,
-        bottom_diff, outer_num_, dim, inner_num_, gama_, has_ignore_label_, ignore_label_, counts);
+        bottom_diff, outer_num_, dim, inner_num_, gamma_, has_ignore_label_, ignore_label_, counts);
 
     // Only launch another CUDA kernel if we actually need the count of valid outputs.
     Dtype valid_count = -1;
