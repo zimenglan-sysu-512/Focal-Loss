@@ -43,11 +43,11 @@ void FocalLossLayer<Dtype>::LayerSetUp(
   FocalLossParameter focal_loss_param = this->layer_param_.focal_loss_param();
   alpha_ = focal_loss_param.alpha();
   beta_  = focal_loss_param.beta();
-  gama_  = focal_loss_param.gama();
+  gamma_ = focal_loss_param.gamma();
   type_  = focal_loss_param.type();
   LOG(INFO) << "alpha: " << alpha_;
   LOG(INFO) << "beta: "  << beta_;
-  LOG(INFO) << "gama: "  << gama_;
+  LOG(INFO) << "gamma: " << gamma_;
   LOG(INFO) << "type: "  << type_;
 }
 
@@ -77,7 +77,7 @@ void FocalLossLayer<Dtype>::Reshape(
   // log(p_t)
   log_prob_.ReshapeLike(*bottom[0]);
   CHECK_EQ(prob_.count(), log_prob_.count());
-  // (1 - p_t) ^ gama
+  // (1 - p_t) ^ gamma
   power_prob_.ReshapeLike(*bottom[0]);
   CHECK_EQ(prob_.count(), power_prob_.count());
   // 1
@@ -128,9 +128,9 @@ void FocalLossLayer<Dtype>::compute_intermediate_values_of_cpu() {
 
   // log(p_t)
   caffe_log(count,  prob_data, log_prob_data);
-  // (1 - p_t) ^ gama
+  // (1 - p_t) ^ gamma
   caffe_sub(count,  ones_data, prob_data, power_prob_data);
-  caffe_powx(count, power_prob_.cpu_data(), gama_, power_prob_data);
+  caffe_powx(count, power_prob_.cpu_data(), gamma_, power_prob_data);
 }
 
 template <typename Dtype>
@@ -161,7 +161,7 @@ void FocalLossLayer<Dtype>::Forward_cpu(
       DCHECK_GE(label_value, 0);
       DCHECK_LT(label_value, channels);
       const int index = i * dim + label_value * inner_num_ + j;
-      // FL(p_t) = -(1 - p_t) ^ gama * log(p_t)
+      // FL(p_t) = -(1 - p_t) ^ gamma * log(p_t)
       loss -= log(std::max(power_prob_data[index] * log_prob_data[index],
                            Dtype(FLT_MIN)));
       ++count;
@@ -212,7 +212,7 @@ void FocalLossLayer<Dtype>::Backward_cpu(const vector<Blob<Dtype>*>& top,
 
         // the gradient from FL w.r.t p_t, here ignore the `sign`
         int ind_i  = i * dim + label_value * inner_num_ + j; // index of ground-truth label
-        Dtype grad = gama_ * (power_prob_data[ind_i] / (1 - prob_data[ind_i])) * log_prob_data[ind_i] 
+        Dtype grad = gamma_ * (power_prob_data[ind_i] / (1 - prob_data[ind_i])) * log_prob_data[ind_i] 
                    + power_prob_data[ind_i] / prob_data[ind_i];
         // the gradient w.r.t input data x
         for (int c = 0; c < channels; ++c) {
