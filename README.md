@@ -23,5 +23,5 @@ message FocalLossParameter {
 ```
 
 ### Notice
-Here use `softmax` instead of `sigmoid` fucntion.  
+Here use `softmax` instead of `sigmoid` function.  
 If you want see how to use `sigmoid` to implement `Focal Loss`, please see https://github.com/sciencefans/Focal-Loss/blob/master/focal_loss_layer.cu to get more information.
