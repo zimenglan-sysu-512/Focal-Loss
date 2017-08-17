@@ -1,6 +1,6 @@
 # Focal-Loss
 loss layer of implementation.  
-You can see "Focal Loss for Dense Object Detection" [arXiv](https://arxiv.org/abs/1708.02002) for more information.
+You can see "Focal Loss for Dense Object Detection" [arXiv](https://arxiv.org/abs/1708.02002) for more information.  
 
 ## Usage
 
@@ -21,3 +21,7 @@ message FocalLossParameter {
   optional float beta  = 4 [default = 1.0];
 }
 ```
+
+### Notice
+Here use `softmax` instead of `sigmoid` fucntion.  
+If you want see how to use `sigmoid` to implement `Focal Loss`, please see https://github.com/sciencefans/Focal-Loss/blob/master/focal_loss_layer.cu to get more information.
