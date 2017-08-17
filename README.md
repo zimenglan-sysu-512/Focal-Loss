@@ -15,9 +15,9 @@ message FocalLossParameter {
     LINEAR = 1; // FL*(p_t) = -log(p_t) / gama, where p_t = sigmoid(gama * x_t + beta), where x_t = x * y, y is the ground truth label {-1, 1}
   }
   optional Type type   = 1 [default = ORIGIN]; 
-  optional float gama  = 2 [default = 2];
+  optional float gamma = 2 [default = 2];
   // cross-categories weights to solve the imbalance problem
-  optional float alpha = 3 [default = 0.75]; 
+  optional float alpha = 3 [default = 0.25]; 
   optional float beta  = 4 [default = 1.0];
 }
 ```
