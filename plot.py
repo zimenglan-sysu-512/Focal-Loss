@@ -29,6 +29,6 @@ def plot_Gradient_of_Focal_Loss(gama=2):
 	pylab.show() # show the plot
 
 if __name__ == '__main__':
-	''''''
+	'''Loss and Gradient'''
 	plot_Focal_Loss(gama=2)
 	plot_Gradient_of_Focal_Loss(gama=2)
