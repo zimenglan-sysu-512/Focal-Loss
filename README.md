@@ -22,6 +22,9 @@ message FocalLossParameter {
 }
 ```
 
+### Derivative
+see https://github.com/zimenglan-sysu-512/paper-note/blob/master/cross_entropy_loss.pdf  
+
 ### ToDo
 Implement `alpha`
 
