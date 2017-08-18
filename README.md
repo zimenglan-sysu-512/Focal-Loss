@@ -25,8 +25,8 @@ message FocalLossParameter {
 ### Derivative
 see https://github.com/zimenglan-sysu-512/paper-note/blob/master/cross_entropy_loss.pdf  
 
-### ToDo
-Implement `alpha`
+### Done
+All categories share the same `alpha`.
 
 ### Notice
 Here use `softmax` instead of `sigmoid` function.  
