@@ -45,8 +45,8 @@ __global__ void FocalLossForwardGPU(const int nthreads,
       counts[index] = 0;
     } else {
       int ind       = n * dim + label_value * spatial_dim + s;
-      loss[index]   = -log(max(power_prob_data[ind] * log_prob_data[ind],
-                               Dtype(FLT_MIN)));
+      // loss[index]   = -max(power_prob_data[ind] * log_prob_data[ind], Dtype(log(Dtype(FLT_MIN))));
+      loss[index]   = -power_prob_data[ind] * log_prob_data[ind];
       counts[index] = 1;
     }
   }
@@ -184,6 +184,7 @@ void FocalLossLayer<Dtype>::Backward_gpu(const vector<Blob<Dtype>*>& top,
         has_ignore_label_) {
       caffe_gpu_asum(nthreads, counts, &valid_count);
     }
+    // Scale gradient
     const Dtype loss_weight = top[0]->cpu_diff()[0] / get_normalizer(normalization_, valid_count);
     caffe_gpu_scal(prob_.count(), loss_weight , bottom_diff);
   }

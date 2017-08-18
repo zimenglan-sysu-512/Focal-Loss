@@ -162,8 +162,9 @@ void FocalLossLayer<Dtype>::Forward_cpu(
       DCHECK_LT(label_value, channels);
       const int index = i * dim + label_value * inner_num_ + j;
       // FL(p_t) = -(1 - p_t) ^ gamma * log(p_t)
-      loss -= log(std::max(power_prob_data[index] * log_prob_data[index],
-                           Dtype(FLT_MIN)));
+      // loss -= std::max(power_prob_data[index] * log_prob_data[index],
+      //                      Dtype(log(Dtype(FLT_MIN))));
+      loss -= power_prob_data[index] * log_prob_data[index];
       ++count;
     }
   }
