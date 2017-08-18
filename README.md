@@ -37,7 +37,7 @@ layer {
 ```
 
 ### Derivative
-see (link)[https://github.com/zimenglan-sysu-512/paper-note/blob/master/focal_loss.pdf]  
+see https://github.com/zimenglan-sysu-512/paper-note/blob/master/focal_loss.pdf 
 
 ### Done
 All categories share the same `alpha`.
