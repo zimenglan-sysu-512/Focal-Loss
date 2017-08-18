@@ -126,9 +126,15 @@ void FocalLossLayer<Dtype>::compute_intermediate_values_of_cpu() {
   Dtype* log_prob_data   = log_prob_.mutable_cpu_data();
   Dtype* power_prob_data = power_prob_.mutable_cpu_data();
 
-  // log(p_t)
-  caffe_log(count,  prob_data, log_prob_data);
-  // (1 - p_t) ^ gamma
+  /// log(p_t)
+  const Dtype eps        = Dtype(FLT_MIN); // where FLT_MIN = 1.17549e-38, here u can change it
+  // more stable
+  for(int i = 0; i < prob_.count(); i++) {
+    log_prob_data[i] = log(std::max(prob_data[i], eps));
+  }
+  /// caffe_log(count,  prob_data, log_prob_data);
+
+  /// (1 - p_t) ^ gamma
   caffe_sub(count,  ones_data, prob_data, power_prob_data);
   caffe_powx(count, power_prob_.cpu_data(), gamma_, power_prob_data);
 }
@@ -213,7 +219,7 @@ void FocalLossLayer<Dtype>::Backward_cpu(const vector<Blob<Dtype>*>& top,
 
         // the gradient from FL w.r.t p_t, here ignore the `sign`
         int ind_i  = i * dim + label_value * inner_num_ + j; // index of ground-truth label
-        Dtype grad = gamma_ * (power_prob_data[ind_i] / (1 - prob_data[ind_i])) * log_prob_data[ind_i] 
+        Dtype grad = gamma_ * (-power_prob_data[ind_i] / (1 - prob_data[ind_i])) * log_prob_data[ind_i] 
                    + power_prob_data[ind_i] / prob_data[ind_i];
         // the gradient w.r.t input data x
         for (int c = 0; c < channels; ++c) {

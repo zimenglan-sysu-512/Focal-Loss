@@ -7,6 +7,16 @@
 
 namespace caffe {
 
+
+template <typename Dtype>
+__global__ void LogOpGPU(const int nthreads,
+          const Dtype* in, Dtype* out, const Dtype eps)
+{
+  CUDA_KERNEL_LOOP(index, nthreads) {
+    out[index] = log(max(in[index], eps));
+  }
+}
+
 template <typename Dtype>
 void FocalLossLayer<Dtype>::compute_intermediate_values_of_gpu() {
   // compute the corresponding variables
@@ -16,9 +26,16 @@ void FocalLossLayer<Dtype>::compute_intermediate_values_of_gpu() {
   Dtype* log_prob_data   = log_prob_.mutable_gpu_data();
   Dtype* power_prob_data = power_prob_.mutable_gpu_data();
 
-  // log(p_t)
-  caffe_gpu_log(count,  prob_data, log_prob_data);
-  // (1 - p_t) ^ gamma
+  /// log(p_t)
+  const int nthreads     = prob_.count();
+  const Dtype eps        = Dtype(FLT_MIN); // where FLT_MIN = 1.17549e-38, here u can change it
+  // more stable
+  // NOLINT_NEXT_LINE(whitespace/operators)
+  LogOpGPU<Dtype><<<CAFFE_GET_BLOCKS(nthreads),
+      CAFFE_CUDA_NUM_THREADS>>>(nthreads, prob_data, log_prob_data, eps);
+  /// caffe_gpu_log(count,  prob_data, log_prob_data);
+
+  /// (1 - p_t) ^ gamma
   caffe_gpu_sub(count,  ones_data, prob_data, power_prob_data);
   caffe_gpu_powx(count, power_prob_.gpu_data(), gamma_, power_prob_data);
 }
@@ -131,7 +148,7 @@ __global__ void FocalLossBackwardGPU(const int nthreads,
     } else {
       // the gradient from FL w.r.t p_t, here ignore the `sign`
       int ind_i  = n * dim + label_value * spatial_dim + s; // index of ground-truth label
-      Dtype grad = gamma * (power_prob_data[ind_i] / (1 - prob_data[ind_i])) * log_prob_data[ind_i] 
+      Dtype grad = gamma * (-power_prob_data[ind_i] / (1 - prob_data[ind_i])) * log_prob_data[ind_i] 
                  + power_prob_data[ind_i] / prob_data[ind_i];
       // the gradient w.r.t input data x
       for (int c = 0; c < channels; ++c) {
