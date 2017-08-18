@@ -150,17 +150,18 @@ __global__ void FocalLossBackwardGPU(const int nthreads,
     } else {
       // the gradient from FL w.r.t p_t, here ignore the `sign`
       int ind_i  = n * dim + label_value * spatial_dim + s; // index of ground-truth label
-      Dtype grad = 0 - gamma * (power_prob_data[ind_i] / max(1 - prob_data[ind_i], eps)) * log_prob_data[ind_i] 
-                     + power_prob_data[ind_i] / prob_data[ind_i];
+      Dtype grad = 0 - gamma * (power_prob_data[ind_i] / max(1 - prob_data[ind_i], eps)) 
+                             * log_prob_data[ind_i] * prob_data[ind_i]
+                     + power_prob_data[ind_i];
       // the gradient w.r.t input data x
       for (int c = 0; c < channels; ++c) {
         int ind_j = n * dim + c * spatial_dim + s;
         if(c == label_value) {
           // if i == j, (here i,j are refered for derivative of softmax)
-          bottom_diff[ind_j] = grad * prob_data[ind_i] * (prob_data[ind_i] - 1);
+          bottom_diff[ind_j] = grad * (prob_data[ind_i] - 1);
         } else {
           // if i != j, (here i,j are refered for derivative of softmax)
-          bottom_diff[ind_j] = grad * prob_data[ind_i] * prob_data[ind_j];
+          bottom_diff[ind_j] = grad * prob_data[ind_j];
         }
       }
       // count
