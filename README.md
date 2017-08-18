@@ -37,7 +37,7 @@ layer {
 ```
 
 ### Derivative
-see https://github.com/zimenglan-sysu-512/paper-note/blob/master/cross_entropy_loss.pdf  
+see (link)[https://github.com/zimenglan-sysu-512/paper-note/blob/master/focal_loss.pdf]  
 
 ### Done
 All categories share the same `alpha`.
