@@ -49,6 +49,9 @@ void FocalLossLayer<Dtype>::LayerSetUp(
   LOG(INFO) << "beta: "  << beta_;
   LOG(INFO) << "gamma: " << gamma_;
   LOG(INFO) << "type: "  << type_;
+  CHECK_GE(gamma_, 0) << "gamma must be larger than or equal to zero";
+  CHECK_GT(alpha_, 0) << "alpha must be larger than zero";
+  // CHECK_LE(alpha_, 1) << "alpha must be smaller than or equal to one";
 }
 
 template <typename Dtype>
@@ -77,7 +80,7 @@ void FocalLossLayer<Dtype>::Reshape(
   // log(p_t)
   log_prob_.ReshapeLike(*bottom[0]);
   CHECK_EQ(prob_.count(), log_prob_.count());
-  // (1 - p_t) ^ gamma
+  // alpha * (1 - p_t) ^ gamma
   power_prob_.ReshapeLike(*bottom[0]);
   CHECK_EQ(prob_.count(), power_prob_.count());
   // 1
@@ -134,9 +137,10 @@ void FocalLossLayer<Dtype>::compute_intermediate_values_of_cpu() {
   }
   /// caffe_log(count,  prob_data, log_prob_data);
 
-  /// (1 - p_t) ^ gamma
+  /// alpha* (1 - p_t) ^ gamma
   caffe_sub(count,  ones_data, prob_data, power_prob_data);
   caffe_powx(count, power_prob_.cpu_data(), gamma_, power_prob_data);
+  caffe_scal(count, alpha_, power_prob_data);
 }
 
 template <typename Dtype>
@@ -200,9 +204,10 @@ void FocalLossLayer<Dtype>::Backward_cpu(const vector<Blob<Dtype>*>& top,
     const Dtype* log_prob_data   = log_prob_.cpu_data();
     const Dtype* power_prob_data = power_prob_.cpu_data();
 
-    int count    = 0;
-    int channels = bottom[0]->shape(softmax_axis_);
-    int dim      = prob_.count() / outer_num_;
+    int count       = 0;
+    int channels    = bottom[0]->shape(softmax_axis_);
+    int dim         = prob_.count() / outer_num_;
+    const Dtype eps = 1e-10;
 
     for (int i = 0; i < outer_num_; ++i) {
       for (int j = 0; j < inner_num_; ++j) {
@@ -219,8 +224,8 @@ void FocalLossLayer<Dtype>::Backward_cpu(const vector<Blob<Dtype>*>& top,
 
         // the gradient from FL w.r.t p_t, here ignore the `sign`
         int ind_i  = i * dim + label_value * inner_num_ + j; // index of ground-truth label
-        Dtype grad = gamma_ * (-power_prob_data[ind_i] / (1 - prob_data[ind_i])) * log_prob_data[ind_i] 
-                   + power_prob_data[ind_i] / prob_data[ind_i];
+        Dtype grad = 0 - gamma_ * (power_prob_data[ind_i] / std::max(1 - prob_data[ind_i], eps)) * log_prob_data[ind_i] 
+                       + power_prob_data[ind_i] / prob_data[ind_i];
         // the gradient w.r.t input data x
         for (int c = 0; c < channels; ++c) {
           int ind_j = i * dim + c * inner_num_ + j;

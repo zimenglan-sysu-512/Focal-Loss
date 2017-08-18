@@ -52,7 +52,7 @@ class FocalLossLayer : public LossLayer<Dtype> {
   /// prob stores the output probability predictions from the SoftmaxLayer.
   Blob<Dtype> prob_;        // softmax output p_t
   Blob<Dtype> log_prob_;    // log(p_t)
-  Blob<Dtype> power_prob_;  // (1 - p_t) ^ gamma
+  Blob<Dtype> power_prob_;  // alpha * (1 - p_t) ^ gamma
   Blob<Dtype> ones_;        // 1
   /// bottom vector holder used in call to the underlying SoftmaxLayer::Forward
   vector<Blob<Dtype>*> softmax_bottom_vec_;
